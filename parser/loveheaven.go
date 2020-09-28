@@ -9,9 +9,14 @@ import (
 	"strings"
 
 	"github.com/Misora000/easyhtml"
-	"github.com/Misora000/mangadl/logging"
+	"github.com/Misora000/mangadl/engine/router"
 	"github.com/Misora000/mangadl/types"
 )
+
+func init() {
+	router.RegisterParser("loveheaven.net", NewLoveHeavenParser)
+	router.RegisterParser("loveha.net", NewLoveHeavenParser)
+}
 
 // LoveHeavenParser handles loveha.net.
 type LoveHeavenParser struct {
@@ -69,10 +74,13 @@ func (p *LoveHeavenParser) ParseChapterList(
 
 			// Parse chapter name & number.
 			if title, exists := attr["title"]; exists {
-				seg := strings.Split(title, " Chapter ")
-				if len(seg) == 2 {
+				if seg := strings.Split(title, " Chapter "); len(seg) == 2 {
 					chap.Name = seg[0]
-					chap.ChapNo, _ = strconv.Atoi(seg[1])
+					if cNo, err := strconv.Atoi(seg[1]); err != nil {
+						chap.ChapNo = seg[1]
+					} else {
+						chap.ChapNo = fmt.Sprintf("%03v", cNo)
+					}
 				}
 			}
 		}
@@ -114,7 +122,7 @@ func (p *LoveHeavenParser) ParseChapter(
 		}
 
 		if raw, err := base64.StdEncoding.DecodeString(src); err != nil {
-			logging.Error(err.Error())
+			chap.PicsURL = append(chap.PicsURL, strings.ReplaceAll(src, "\n", ""))
 		} else {
 			chap.PicsURL = append(chap.PicsURL,
 				strings.ReplaceAll(string(raw), "\n", ""))
@@ -154,9 +162,10 @@ func (p *LoveHeavenParser) parseChapterInfo(
 	// Format: CHAPTER 26
 	cNo, err := strconv.Atoi(text[len("CHAPTER "):])
 	if err != nil {
-		return fmt.Errorf("invalid chapter: %v", text)
+		chap.ChapNo = text[len("CHAPTER "):]
+	} else {
+		chap.ChapNo = fmt.Sprintf("%03v", cNo)
 	}
-	chap.ChapNo = cNo
 
 	return nil
 }

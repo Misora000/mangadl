@@ -10,7 +10,7 @@ func Log(format string, attr ...interface{}) {
 
 // Debug set log.
 func Debug(format string, attr ...interface{}) {
-	fmt.Printf(format+"\n", attr...)
+	// fmt.Printf(format+"\n", attr...)
 	return
 }
 
@@ -18,4 +18,9 @@ func Debug(format string, attr ...interface{}) {
 func Error(format string, attr ...interface{}) {
 	fmt.Printf(format+"\n", attr...)
 	return
+}
+
+// Fatal set log.
+func Fatal(format string, attr ...interface{}) {
+	panic(fmt.Sprintf(format+"\n", attr...))
 }

@@ -21,17 +21,17 @@ type Chapter struct {
 	downloader.Downloader
 	ctx      context.Context
 	Name     string
-	ChapNo   int
+	ChapNo   string
 	PageURL  string
 	PicsURL  []string
 	ReferURL string
 }
 
-// ChapterJob common methods interface.
-type ChapterJob interface {
-	GetPage() (io.Reader, error)
-	DownloadPics(dst string) int
-}
+// // ChapterJob common methods interface.
+// type ChapterJob interface {
+// 	GetPage() (io.Reader, error)
+// 	DownloadPics(dst string) int
+// }
 
 // NewChapter new a chapter object.
 func NewChapter(ctx context.Context, url string) *Chapter {
@@ -76,7 +76,7 @@ func (c *Chapter) DownloadPics(dst string) (succ int) {
 			logging.Error(err.Error())
 			break
 		}
-		chap := fmt.Sprintf("%v/%03v", home, c.ChapNo)
+		chap := fmt.Sprintf("%v/%v", home, c.ChapNo)
 		if err := os.Mkdir(chap, 0644); err != nil && !os.IsExist(err) {
 			logging.Error(err.Error())
 			break
