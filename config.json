@@ -1,3 +1,4 @@
 {
-	"download_root": "path/to/the/download/directory"
+	"download_root": "path/to/the/download/directory",
+	"log_level": 2
 }

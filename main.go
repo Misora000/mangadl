@@ -11,10 +11,11 @@ import (
 	"os"
 	"time"
 
-	"github.com/shopspring/decimal"
-
 	"github.com/Misora000/mangadl/engine"
+	"github.com/Misora000/mangadl/logging"
 	"github.com/Misora000/mangadl/types"
+
+	"github.com/shopspring/decimal"
 )
 
 var (
@@ -34,6 +35,7 @@ var (
 // Config defines the user config.
 type Config struct {
 	DownloadRoot string `json:"download_root"`
+	LogLevel     int    `json:"log_level"`
 }
 
 func loadConfig() error {
@@ -59,6 +61,7 @@ func main() {
 		panic(err)
 	}
 
+	logging.Initialize(config.LogLevel)
 	engine.Initialize()
 	defer engine.Finalize()
 
@@ -83,8 +86,8 @@ func main() {
 		if err != nil {
 			panic(err)
 		}
-		fmt.Println("Name:", chapList.Name)
-		fmt.Println("Chapter Num:", len(chapList.Chapters))
+		logging.Log("Name: %v", chapList.Name)
+		logging.Log("Chapters: %v", len(chapList.Chapters))
 		chapters = chapList.Chapters
 	} else {
 		chapters = append(chapters, types.NewChapter(ctx, *reqURL))
@@ -92,38 +95,38 @@ func main() {
 
 	dlCount := 0
 	defer func() {
-		fmt.Println("total downloaded chapters:", dlCount)
+		logging.Log("total downloaded chapters: %v", dlCount)
 	}()
 
 	// Download pics of all chapters.
 	for i, v := range chapters {
 		if *limit > 0 && dlCount >= *limit {
-			fmt.Println("terminate by chapters limit:", *limit)
+			logging.Log("terminate by chapters limit: %v", *limit)
 			break
 		}
 
 		chap, err := p.ParseChapter(ctx, v.PageURL)
 		if err != nil {
-			fmt.Println(err)
+			logging.Error(err.Error())
 			continue
 		}
 
 		if skipThisChapter(chap.ChapNo) {
-			fmt.Println("skip chapter:", chap.ChapNo)
+			logging.Log("skip chapter: %v", chap.ChapNo)
 			continue
 		}
 
-		fmt.Println("----", chap.Name, fmt.Sprintf("#%v", chap.ChapNo), "----")
+		logging.Log("---- %v %v ----", chap.Name, fmt.Sprintf("#%v", chap.ChapNo))
 
 		if *preview {
 			for _, p := range chap.PicsURL {
-				fmt.Println(p)
+				logging.Log(p)
 			}
 			continue
 		}
 
 		totalDL := chap.DownloadPics(config.DownloadRoot)
-		fmt.Println("totoal downloaded:", totalDL, "pics")
+		logging.Log("totoal downloaded: %v pics", totalDL)
 
 		dlCount++
 
@@ -140,7 +143,7 @@ func main() {
 func skipThisChapter(chapNo string) bool {
 	no, err := decimal.NewFromString(chapNo)
 	if err != nil {
-		fmt.Println("none decimal chapter no:", chapNo)
+		logging.Error("none decimal chapter no: %v", chapNo)
 		return false
 	}
 

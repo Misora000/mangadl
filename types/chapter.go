@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/Misora000/mangadl/engine/downloader"
@@ -26,12 +27,6 @@ type Chapter struct {
 	PicsURL  []string
 	ReferURL string
 }
-
-// // ChapterJob common methods interface.
-// type ChapterJob interface {
-// 	GetPage() (io.Reader, error)
-// 	DownloadPics(dst string) int
-// }
 
 // NewChapter new a chapter object.
 func NewChapter(ctx context.Context, url string) *Chapter {
@@ -71,7 +66,7 @@ func (c *Chapter) DownloadPics(dst string) (succ int) {
 		}
 
 		// Create folder.
-		home := fmt.Sprintf("%v/%v", dst, c.Name)
+		home := fmt.Sprintf("%v/%v", dst, normalizeChapterName(c.Name))
 		if err := os.Mkdir(home, 0644); err != nil && !os.IsExist(err) {
 			logging.Error(err.Error())
 			break
@@ -127,4 +122,11 @@ func (l *ChapterList) GetPage() (io.Reader, error) {
 
 	ret, _, _, err := l.Get(ctx, l.PageURL)
 	return ret, err
+}
+
+func normalizeChapterName(name string) string {
+	for _, c := range []string{"\\", "/", ":", "*", "?", "\"", "<", ">", "|"} {
+		name = strings.ReplaceAll(name, c, " ")
+	}
+	return strings.TrimSpace(name)
 }
